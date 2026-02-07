@@ -74,6 +74,11 @@ export const Register: React.FC = () => {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
+        // Profile photo is required
+        if (!profilePhoto) {
+            newErrors.profilePhoto = 'Profile photo is required';
+        }
+
         const nameError = validators.required(formData.name, 'Full name');
         if (nameError) newErrors.name = nameError;
 
@@ -115,7 +120,13 @@ export const Register: React.FC = () => {
         e.preventDefault();
         clearError();
 
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            // Show toast for photo error since it's not near a field
+            if (errors.profilePhoto) {
+                toast.error('Photo Required', 'Please upload a profile photo');
+            }
+            return;
+        }
 
         try {
             await register({
@@ -126,8 +137,9 @@ export const Register: React.FC = () => {
                 dateOfBirth: formData.dateOfBirth,
                 profilePicture: profilePhoto || undefined,
             });
-            toast.success('Welcome!', 'Your account has been created.');
-            navigate('/supplier');
+            // Registration creates pending account - redirect to login with message
+            toast.success('Registration Submitted!', 'Your account is pending admin approval. You will be notified once approved.');
+            navigate('/login');
         } catch {
             // Error is already in the store
         }

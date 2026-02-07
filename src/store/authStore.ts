@@ -69,18 +69,17 @@ export const useAuthStore = create<AuthState>()(
             register: async (data) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await apiClient.post<{ user: User; token: string }>(
+                    // Registration now returns just success message (no token)
+                    // User needs admin approval before they can login
+                    await apiClient.post<{ success: boolean; message: string }>(
                         '/auth/register',
                         data,
                         { skipAuth: true }
                     );
-                    // Auto-login after registration
-                    apiClient.setToken(response.token);
+                    // DON'T set user/token - account is pending approval
                     set({
-                        user: response.user,
-                        token: response.token,
                         isLoading: false,
-                        isAuthenticated: true,
+                        // Keep user/token as null - they need to login after approval
                     });
                 } catch (error) {
                     set({

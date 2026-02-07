@@ -1,0 +1,12 @@
+# Mailstack API - .htaccess
+# Allow direct PHP file access
+
+# Enable error reporting for debugging (remove in production)
+# php_flag display_errors on
+# php_value error_reporting E_ALL
+
+# Deny access to config files
+<Files "database.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
