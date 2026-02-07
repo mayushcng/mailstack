@@ -7,7 +7,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'ottsathi1_mailstack');
 define('DB_USER', 'ottsathi1_mailstack');
-define('DB_PASS', 'YOUR_PASSWORD_HERE');  // ← CHANGE THIS
+define('DB_PASS', 'mayush@9852');
 
 // =============================================================================
 // JWT SECRET KEY
