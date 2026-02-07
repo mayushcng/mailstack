@@ -4,6 +4,7 @@
 // Creates a payout request
 // =============================================================================
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendError('Method not allowed', 405);
@@ -62,8 +63,12 @@ $stmt->execute([
     json_encode($payoutSettings)
 ]);
 
+// Send email confirmation
+sendPayoutRequestEmail($user['email'], $user['name'], $amount);
+
 sendResponse([
     'success' => true,
     'message' => 'Payout request submitted successfully',
     'requestId' => strval($db->lastInsertId())
 ], 201);
+

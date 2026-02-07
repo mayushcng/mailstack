@@ -3,6 +3,7 @@
 // ADMIN PAYOUTS - GET/POST /api/admin/payouts (or payout-requests)
 // =============================================================================
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email.php';
 
 $user = authenticateRequest();
 if (!$user || $user['role'] !== 'admin') {
@@ -26,16 +27,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (preg_match('/\/payout-requests\/(\d+)\/pay/', $uri, $matches)) {
         $id = intval($matches[1]);
 
-        // Get payout details
-        $payout = $db->query("SELECT * FROM payout_requests WHERE id = " . intval($id))->fetch();
-        if ($payout) {
+        // Get payout details with supplier info
+        $payout = $db->prepare("
+            SELECT pr.*, u.name, u.email 
+            FROM payout_requests pr 
+            JOIN users u ON pr.supplier_id = u.id 
+            WHERE pr.id = ?
+        ");
+        $payout->execute([$id]);
+        $payoutData = $payout->fetch();
+
+        if ($payoutData) {
             // Deduct from user's available balance
             $db->prepare("UPDATE users SET available_balance = available_balance - ? WHERE id = ?")
-                ->execute([$payout['amount'], $payout['supplier_id']]);
+                ->execute([$payoutData['amount'], $payoutData['supplier_id']]);
+
+            // Update payout status
+            $stmt = $db->prepare("UPDATE payout_requests SET status = 'completed', processed_at = NOW() WHERE id = ?");
+            $stmt->execute([$id]);
+
+            // Send email notification
+            sendPayoutProcessedEmail(
+                $payoutData['email'],
+                $payoutData['name'],
+                $payoutData['amount'],
+                $payoutData['payment_method'] ?? 'Bank Transfer'
+            );
         }
 
-        $stmt = $db->prepare("UPDATE payout_requests SET status = 'completed', processed_at = NOW() WHERE id = ?");
-        $stmt->execute([$id]);
         sendResponse(['success' => true, 'message' => 'Payout marked as paid']);
     }
 

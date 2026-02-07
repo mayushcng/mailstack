@@ -5,6 +5,7 @@
 // Returns PaginatedResponse<Gmail> for GET
 // =============================================================================
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email.php';
 
 $user = authenticateRequest();
 if (!$user || $user['role'] !== 'admin') {
@@ -58,6 +59,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $placeholders = implode(',', array_fill(0, count($gmailIds), '?'));
         $stmt = $db->prepare("UPDATE email_submissions SET status = 'rejected', rejection_reason = ?, reviewed_at = NOW() WHERE id IN ($placeholders)");
         $stmt->execute(array_merge([$remark], $gmailIds));
+
+        // Send email notifications to affected suppliers
+        foreach ($gmailIds as $id) {
+            $sub = $db->prepare("
+                SELECT es.*, u.email, u.name 
+                FROM email_submissions es 
+                JOIN users u ON es.supplier_id = u.id 
+                WHERE es.id = ?
+            ");
+            $sub->execute([$id]);
+            $submission = $sub->fetch();
+            if ($submission) {
+                sendSubmissionFlaggedEmail($submission['email'], $submission['name'], 'rejected', $remark);
+            }
+        }
+
         sendResponse(['success' => true, 'message' => 'Rejected successfully', 'processed' => count($gmailIds)]);
     }
 

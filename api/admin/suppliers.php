@@ -4,6 +4,7 @@
 // Handles RESTful paths (/suppliers/123) and query params (?id=123)
 // =============================================================================
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email.php';
 
 $user = authenticateRequest();
 if (!$user || $user['role'] !== 'admin') {
@@ -163,14 +164,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'PATC
         sendError('Supplier ID required', 400);
     }
 
+    // Get supplier info for email
+    $supplierStmt = $db->prepare("SELECT email, name, status FROM users WHERE id = ?");
+    $supplierStmt->execute([$id]);
+    $supplier = $supplierStmt->fetch();
+    $oldStatus = $supplier['status'] ?? '';
+
     $updates = [];
     $params = [];
+    $newStatus = null;
 
     if (isset($input['status'])) {
         $statusMap = ['ACTIVE' => 'approved', 'PENDING' => 'pending', 'DISABLED' => 'suspended'];
         $dbStatus = $statusMap[$input['status']] ?? strtolower($input['status']);
         $updates[] = "status = ?";
         $params[] = $dbStatus;
+        $newStatus = $dbStatus;
     }
 
     if (empty($updates)) {
@@ -180,6 +189,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'PATC
     $params[] = $id;
     $stmt = $db->prepare("UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?");
     $stmt->execute($params);
+
+    // Send email notification on status change
+    if ($newStatus && $supplier && $oldStatus !== $newStatus) {
+        $email = $supplier['email'];
+        $name = $supplier['name'];
+
+        if ($newStatus === 'approved') {
+            sendApprovalEmail($email, $name);
+        } elseif ($newStatus === 'suspended' || $newStatus === 'rejected') {
+            sendDisabledEmail($email, $name, $input['reason'] ?? null);
+        }
+    }
 
     sendResponse(['success' => true, 'message' => 'Supplier updated']);
 }

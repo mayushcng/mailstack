@@ -4,6 +4,7 @@
 // Creates a pending supplier account (requires admin approval)
 // =============================================================================
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendError('Method not allowed', 405);
@@ -54,6 +55,9 @@ $stmt->execute([$email, $hashedPassword, $name, $phone, $dateOfBirth, $profilePi
 
 $userId = $db->lastInsertId();
 
+// Send registration confirmation email
+sendRegistrationEmail($email, $name);
+
 // DON'T return token - user needs admin approval first
 // Return success message only
 sendResponse([
@@ -61,3 +65,4 @@ sendResponse([
     'message' => 'Registration submitted. Your account is pending admin approval.',
     'userId' => strval($userId)
 ], 201);
+
