@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 // =============================================================================
-// PUT - Update settings
+// PUT/PATCH - Update settings
 // =============================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+if ($_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'PATCH') {
     $input = getInput();
 
     $mapping = [
