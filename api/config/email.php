@@ -1,15 +1,15 @@
 <?php
 // =============================================================================
 // EMAIL CONFIGURATION AND HELPER
-// For cPanel hosting - uses PHP mail() which works automatically
+// Uses authenticated SMTP for better deliverability (avoids spam)
 // =============================================================================
 
-// Email Configuration for Mailstack
-define('SMTP_HOST', 'localhost');  // cPanel uses local mail
-define('SMTP_PORT', 25);           // Default local port
-define('SMTP_USER', '');           // Not needed for local mail
-define('SMTP_PASS', '');           // Not needed for local mail
-define('SMTP_FROM', 'noreply@mailstack.shop');  // Your from address
+// SMTP Configuration - Authenticated for mailstack.shop
+define('SMTP_HOST', 'mail.mailstack.shop');  // cPanel mail server
+define('SMTP_PORT', 465);                     // SSL port
+define('SMTP_USER', 'notifications@mailstack.shop');
+define('SMTP_PASS', 'bikash@9852');
+define('SMTP_FROM', 'notifications@mailstack.shop');
 define('SMTP_FROM_NAME', 'Mailstack');
 
 // =============================================================================
@@ -33,15 +33,19 @@ function sendEmail($to, $subject, $htmlBody, $textBody = null)
 // =============================================================================
 function sendWithMail($to, $subject, $htmlBody)
 {
+    $from = SMTP_FROM;
+    $fromName = SMTP_FROM_NAME;
+
     $headers = [
         'MIME-Version: 1.0',
         'Content-type: text/html; charset=utf-8',
-        'From: ' . SMTP_FROM_NAME . ' <' . SMTP_FROM . '>',
-        'Reply-To: ' . SMTP_FROM,
-        'X-Mailer: PHP/' . phpversion()
+        'From: ' . $fromName . ' <' . $from . '>',
+        'Reply-To: ' . $from,
+        'X-Mailer: Mailstack/1.0'
     ];
 
-    return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+    // Use -f flag to set envelope sender (helps with spam)
+    return mail($to, $subject, $htmlBody, implode("\r\n", $headers), "-f" . $from);
 }
 
 // =============================================================================
