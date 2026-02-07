@@ -1,15 +1,15 @@
 <?php
 // =============================================================================
 // EMAIL CONFIGURATION AND HELPER
-// Update SMTP credentials below for your email provider
+// For cPanel hosting - uses PHP mail() which works automatically
 // =============================================================================
 
-// SMTP Configuration - UPDATE THESE VALUES
-define('SMTP_HOST', 'smtp.gmail.com');  // Your SMTP host
-define('SMTP_PORT', 587);                // Usually 587 for TLS
-define('SMTP_USER', 'your-email@gmail.com');  // Your email
-define('SMTP_PASS', 'your-app-password');     // App password (not regular password)
-define('SMTP_FROM', 'noreply@mailstack.shop');
+// Email Configuration for Mailstack
+define('SMTP_HOST', 'localhost');  // cPanel uses local mail
+define('SMTP_PORT', 25);           // Default local port
+define('SMTP_USER', '');           // Not needed for local mail
+define('SMTP_PASS', '');           // Not needed for local mail
+define('SMTP_FROM', 'noreply@mailstack.shop');  // Your from address
 define('SMTP_FROM_NAME', 'Mailstack');
 
 // =============================================================================
